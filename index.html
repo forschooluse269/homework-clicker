@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>숙제 클리커</title>
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
+:root{--ink:#222;--blue:#3a86ff;--red:#ff595e;--yel:#ffd23f;--grn:#8ac926;--pur:#8338ec}
+body{margin:0;font-size:19px;font-family:"Gaegu","Segoe Print","Bradley Hand","Chalkboard SE","Comic Sans MS","Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:var(--ink);background-color:#fdfcf3;background-image:linear-gradient(90deg,transparent 46px,#ff8a8a 46px,#ff8a8a 49px,transparent 49px),repeating-linear-gradient(#fdfcf3 0 29px,#a9d6f5 29px 31px);min-height:100vh;overflow-x:hidden}
+#app{display:grid;grid-template-columns:340px 1fr 370px;gap:14px;padding:12px;height:100vh}
+.panel{background:rgba(255,254,247,.93);border:3px solid var(--ink);border-radius:30px 8px 28px 8px/8px 28px 8px 30px;padding:14px;overflow-y:auto;box-shadow:4px 5px 0 rgba(0,0,0,.18)}
+@media(max-width:900px){#app{display:flex;flex-direction:column;height:auto}#left{order:1}#right{order:2}#mid{order:3}.panel{overflow:visible}}
+#left{text-align:center}
+h1#title{font-size:36px;margin:0 0 6px;transform:rotate(-2deg);text-decoration:underline wavy var(--red);filter:url(#wob)}
+h2{margin:14px 0 6px;font-size:24px;text-decoration:underline wavy var(--blue)}
+#cname{font:inherit;border:none;border-bottom:3px dashed var(--ink);background:transparent;width:120px;text-align:center;font-size:21px;color:var(--ink);user-select:text}
+#count{font-size:50px;font-weight:bold;line-height:1.1}
+#cps{font-size:19px;color:#555}
+#hw{width:230px;max-width:70%;cursor:pointer;margin:8px auto 0;display:block;transition:transform .08s;touch-action:manipulation}
+#hw:active,#hw.press{transform:scale(.92) rotate(3deg)}
+#hw .oh{display:none}#hw.ouch .oh{display:inline}#hw.ouch .smile{display:none}
+#hint{font-size:15px;color:#777;margin:0 0 8px}
+#buffs{min-height:34px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:4px 0}
+.buff{background:var(--yel);border:2px solid var(--ink);border-radius:12px;padding:2px 8px;font-size:16px;animation:bump .5s infinite alternate}
+@keyframes bump{to{transform:scale(1.07) rotate(1deg)}}
+button{font:inherit;cursor:pointer;color:var(--ink);background:#fff;border:2px solid var(--ink);border-radius:10px 4px 12px 4px;padding:4px 10px;box-shadow:2px 2px 0 var(--ink)}
+button:active{transform:translate(2px,2px);box-shadow:none}
+button.on{background:var(--yel)}
+#ticker{background:var(--yel);border:3px solid var(--ink);border-radius:10px;padding:10px;min-height:66px;transform:rotate(-.6deg);font-size:19px;transition:opacity .3s}
+#ach{display:flex;flex-wrap:wrap;gap:6px}
+.a{width:42px;height:42px;border:2px solid var(--ink);border-radius:50%;display:grid;place-items:center;font-size:22px;background:#fff}
+.a.lock{filter:grayscale(1);opacity:.35}
+#stats{font-size:19px;line-height:1.6}
+#ups{display:flex;flex-wrap:wrap;gap:6px;min-height:52px;padding-bottom:8px;border-bottom:3px dashed var(--ink);margin-bottom:8px}
+.upg{width:46px;height:46px;font-size:24px;padding:0;border-radius:50%}
+.upg.no{opacity:.45;filter:grayscale(.7)}
+.item{display:flex;gap:10px;align-items:center;background:#fff;border:3px solid var(--ink);border-radius:14px 5px 14px 5px;padding:6px 8px;margin:7px 0;cursor:pointer;transition:transform .1s}
+.item:hover{transform:rotate(-1deg) scale(1.02)}
+.item.no{opacity:.55}
+.item.yes{border-color:#2d9d2d;background:#f1ffe0;animation:glow 1.2s infinite alternate}
+@keyframes glow{to{box-shadow:0 0 14px #8ac926}}
+.ic{font-size:34px;width:44px;text-align:center}
+.nm{font-weight:bold;font-size:21px}.ds{font-size:15px;color:#555;line-height:1.15}.cs{font-size:17px}
+.ow{margin-left:auto;font-size:32px;font-weight:bold;color:#bbb}
+#acBar{height:8px;border:2px solid var(--ink);border-radius:5px;margin-top:5px;background:#fff;overflow:hidden}
+#acBar i{display:block;height:100%;width:0;background:var(--blue)}
+.gold{position:fixed;z-index:40;width:76px;height:76px;border-radius:50%;background:radial-gradient(circle,#fff6a8,#ffd23f 60%,#ff9f1c);border:4px solid var(--ink);display:grid;place-items:center;font-size:32px;font-weight:bold;color:var(--red);cursor:pointer;animation:gp .5s infinite alternate;box-shadow:0 0 28px #ffd23f}
+@keyframes gp{from{transform:scale(.9) rotate(-12deg)}to{transform:scale(1.15) rotate(12deg)}}
+.fx{position:fixed;pointer-events:none;font-size:22px;z-index:50;animation:fly .9s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
+.pop{position:fixed;pointer-events:none;font-weight:bold;font-size:26px;z-index:51;color:var(--ink);text-shadow:2px 2px 0 #fff,-2px -2px 0 #fff,2px -2px 0 #fff,-2px 2px 0 #fff;animation:up 1s forwards}
+@keyframes up{to{transform:translateY(-70px);opacity:0}}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:60}
+#flash.go{animation:fl .5s}@keyframes fl{from{opacity:.85}to{opacity:0}}
+#note{position:fixed;top:-140px;left:50%;transform:translateX(-50%);background:#fff;border:3px solid var(--ink);border-radius:14px;padding:10px 18px;z-index:70;transition:top .35s;max-width:90vw;text-align:center;font-size:21px;box-shadow:4px 4px 0 var(--ink)}
+#note.show{top:12px}
+#tip{position:fixed;z-index:80;display:none;background:#fff;border:3px solid var(--ink);border-radius:10px;padding:8px 10px;max-width:270px;pointer-events:none;font-size:17px}
+body.f::after,body.c::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:30;box-shadow:inset 0 0 90px 10px red;animation:hue 1s linear infinite}
+@keyframes hue{to{filter:hue-rotate(360deg)}}
+body.f #title{background:linear-gradient(90deg,red,orange,gold,green,blue,violet,red);background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rb 1s linear infinite}
+@keyframes rb{to{background-position:200%}}
+body.f #count{color:var(--red)}
+body.c #app{animation:shake .12s infinite}
+@keyframes shake{25%{transform:translate(2px,-2px)}75%{transform:translate(-2px,2px)}}
+body.noscr::after{display:none!important}
+body.noscr #app{animation:none!important}
+#setBg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:90;display:none;place-items:center}
+#setBg.show{display:grid}
+#setBox{background:#fffef7;border:3px solid var(--ink);border-radius:20px 6px 20px 6px;padding:18px 22px;width:min(440px,92vw);box-shadow:6px 6px 0 var(--ink)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 0}
+.row input[type=checkbox]{transform:scale(1.6);margin-right:6px}
+.row input[type=range]{width:150px}
+/* admin */
+#adm{position:fixed;left:12px;top:12px;width:340px;max-width:94vw;max-height:88vh;overflow:auto;z-index:95;display:none;background:#fffbe6;border:3px solid #c1121f;border-radius:14px 4px 14px 4px;box-shadow:5px 5px 0 #c1121f;font-size:17px}
+#adm.show{display:block}
+#admHead{background:#c1121f;color:#fff;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;cursor:move;position:sticky;top:0;z-index:2;touch-action:none}
+#admHead button{padding:0 8px}
+#admBody{padding:6px 10px}
+.admSec h3{margin:10px 0 4px;font-size:19px;color:#c1121f;border-bottom:2px dashed #c1121f}
+.admLab{font-size:15px;color:#555;margin:6px 0 2px}
+#adm button{padding:1px 8px;margin:2px 2px 2px 0;font-size:16px}
+#adm input[type=text]{font:inherit;width:120px;border:2px solid var(--ink);border-radius:6px;padding:1px 6px;user-select:text}
+#admDbg{padding:6px 10px 10px;font-family:monospace;font-size:13px;color:#333;border-top:2px dashed #c1121f;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><filter id="wob"><feTurbulence id="turb" type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="1" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="5"/></filter></svg>
+<div id="flash"></div><div id="note"></div><div id="tip"></div>
+
+<div id="adm"><div id="admHead"><b data-k="admTitle"></b><button id="admX">✖</button></div><div id="admBody"></div><div id="admDbg"></div></div>
+
+<div id="setBg"><div id="setBox">
+  <h2 data-k="setTitle" style="margin-top:0"></h2>
+  <div class="row"><span data-k="sLang"></span><span><button data-lang="ko">한국어</button> <button data-lang="en">English</button></span></div>
+  <div class="row"><span data-k="sSound"></span><input type="checkbox" id="sSound"></div>
+  <div class="row"><span data-k="sVol"></span><input type="range" id="sVol" min="0" max="100"></div>
+  <div class="row"><span data-k="sMusic"></span><input type="checkbox" id="sMusic"></div>
+  <div class="row"><span data-k="sMVol"></span><input type="range" id="sMVol" min="0" max="100"></div>
+  <div class="row"><span data-k="sFx"></span><input type="checkbox" id="sFx"></div>
+  <div class="row"><span data-k="sScr"></span><input type="checkbox" id="sScr"></div>
+  <div class="row"><span data-k="sNum"></span><span><button data-nf="kr" data-k="numKr"></button> <button data-nf="en" data-k="numEn"></button></span></div>
+  <div style="text-align:center;margin-top:14px"><button id="setClose" data-k="close"></button></div>
+</div></div>
+
+<div id="app">
+  <section id="left" class="panel">
+    <h1 id="title" data-k="title"></h1>
+    <div><input id="cname" maxlength="14"><span data-k="pile"></span></div>
+    <div id="count">0</div>
+    <div id="lbl"></div>
+    <div id="cps"></div>
+    <div id="buffs"></div>
+    <svg id="hw" viewBox="0 0 240 300">
+      <g filter="url(#wob)" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M28 22 L205 14 L216 282 L22 290 Z" fill="#fff" stroke="#222" stroke-width="5"/>
+        <path d="M172 16 L205 14 L203 50 Z" fill="#e6e6e6" stroke="#222" stroke-width="4"/>
+        <text id="hwtxt" x="40" y="66" font-size="30" font-weight="bold" fill="#222" stroke="none">HOMEWORK</text>
+        <path d="M44 92 q16 -10 32 0 t32 0 t32 0" fill="none" stroke="#3a86ff" stroke-width="3"/>
+        <path d="M44 114 q16 -10 32 0 t32 0 t32 0" fill="none" stroke="#3a86ff" stroke-width="3"/>
+        <path d="M44 136 q16 -10 32 0 t32 0" fill="none" stroke="#3a86ff" stroke-width="3"/>
+        <g transform="rotate(-18 175 120)"><text x="146" y="132" font-size="44" font-weight="bold" fill="#ff595e" stroke="none">A+</text><ellipse cx="170" cy="118" rx="36" ry="26" fill="none" stroke="#ff595e" stroke-width="3"/></g>
+        <circle cx="120" cy="212" r="42" fill="#ffd23f" stroke="#222" stroke-width="5"/>
+        <circle cx="104" cy="202" r="5" fill="#222"/><circle cx="136" cy="202" r="5" fill="#222"/>
+        <path class="smile" d="M98 222 Q120 247 142 222" fill="none" stroke="#222" stroke-width="5"/>
+        <ellipse class="oh" cx="120" cy="230" rx="9" ry="12" fill="#222"/>
+      </g>
+    </svg>
+    <div id="hint" data-k="hint"></div>
+    <div><button id="saveBtn" data-k="save"></button> <button id="setBtn" data-k="settings"></button> <button id="resetBtn" data-k="reset"></button></div>
+  </section>
+
+  <section id="mid" class="panel">
+    <h2 data-k="news"></h2>
+    <div id="ticker">...</div>
+    <h2 data-k="report"></h2>
+    <div id="stats"></div>
+    <h2 data-k="ach"></h2>
+    <div id="ach"></div>
+  </section>
+
+  <section id="right" class="panel">
+    <h2 style="margin-top:0" data-k="upg"></h2>
+    <div id="ups"></div>
+    <div id="amt"><button data-a="1" class="on" data-k="buy1"></button> <button data-a="10" data-k="buy10"></button> <button data-a="100" data-k="buy100"></button></div>
+    <h2 id="acHead" data-k="acHead"></h2>
+    <div id="acCard" class="item">
+      <div class="ic">🖱️</div>
+      <div style="flex:1"><div class="nm" data-k="acName"></div><div class="cs" id="acCost"></div><div class="ds" data-k="acDesc"></div><div id="acBar"><i></i></div></div>
+      <div class="ow" id="acOwn">0</div>
+    </div>
+    <h2 data-k="helpers"></h2>
+    <div id="store"></div>
+  </section>
+</div>
+
+<script>
+const $=s=>$d.querySelector(s),$d=document;
+const P=s=>s.split('|');           // "한국어|English"
+
+/* ---------- SETTINGS / LANGUAGE ---------- */
+const DEF={lang:'ko',sound:true,vol:.5,music:true,mvol:.5,fx:true,scr:true,nf:'kr'};
+let S={name:'',hw:0,total:0,clicks:0,gold:0,ac:0,b:[],up:[],ach:[],set:{...DEF}};
+const tr=a=>a[S.set.lang=='ko'?0:1];
+const D={
+ title:P('숙제 클리커|Homework Clicker'),pile:P('의 숙제 더미|\'s homework pile'),defName:P('우리 반|Your'),
+ save:P('저장|Save'),reset:P('초기화|Reset'),settings:P('설정|Settings'),
+ hint:P('스페이스바를 눌러도 클릭돼요!|Press the space bar to click, too!'),
+ news:P('속보|Breaking News'),report:P('성적표|Report Card'),ach:P('업적|Achievements'),
+ upg:P('업그레이드|Upgrades'),helpers:P('숙제 도우미|Homework Helpers'),
+ acHead:P('자동 클릭|Auto-Clicker'),acName:P('자동 낙서 손|Auto-Scribbler'),
+ acDesc:P('3초마다 숙제를 한 번 대신 클릭해줘요. 살 때마다 +1개! (살수록 조금씩 비싸져요)|Clicks the homework for you once every 3 seconds. Each one adds +1! (Gets a little pricier each time.)'),
+ buy1:P('×1 구매|Buy ×1'),buy10:P('×10 구매|Buy ×10'),buy100:P('×100 구매|Buy ×100'),
+ cps:P('초당 생산량|per second'),cost:P('가격|Cost'),each:P('개당|each'),persec:P('/초|/s'),
+ noUp:P('아직 업그레이드가 없어요... 계속 끄적이세요!|no upgrades yet... keep scribbling!'),
+ stTotal:P('지금까지 만든 숙제|Total homeworks made'),stClicks:P('클릭 횟수|Times clicked'),stGold:P('잡은 황금 A+|Golden A+ caught'),
+ stUp:P('업그레이드|Upgrades'),stHelp:P('고용한 도우미|Helpers hired'),stAuto:P('자동 낙서 손|Auto-Scribblers'),
+ setTitle:P('⚙️ 설정|⚙️ Settings'),sLang:P('언어|Language'),sSound:P('효과음|Sound effects'),sVol:P('효과음 볼륨|Effects volume'),
+ sMusic:P('배경 음악 (로파이)|Background music (lofi)'),sMVol:P('음악 볼륨|Music volume'),
+ sFx:P('파티클 효과|Particle effects'),sScr:P('화면 번쩍임·흔들림|Screen flash & shake'),sNum:P('숫자 표기|Number format'),
+ numKr:P('한국식 (만·억·조)|Korean (만·억·조)'),numEn:P('영어식 (K·M·B)|English (K·M·B)'),close:P('닫기|Close'),
+ saved:P('💾 저장했어요!|💾 Saved!'),wipe:P('모든 숙제 진행 상황을 지울까요?|Wipe ALL your homework progress?'),
+ achGot:P('업적 달성|Achievement'),achBonus:P('(숙제 파워 +1%)|(+1% homework power)'),
+ admTitle:P('🛠️ 관리자 메뉴|🛠️ Admin Menu'),admOn:P('🛠️ 관리자 모드 켜짐!|🛠️ Admin mode ON!'),admOff:P('🛠️ 관리자 모드 꺼짐|🛠️ Admin mode OFF'),
+ admAdd:P('추가|Add'),admPh:P('숫자 (예: 1e12)|number (e.g. 1e12)')
+};
+function applyLang(){
+  const ko=S.set.lang=='ko';
+  $d.documentElement.lang=S.set.lang;
+  $d.querySelectorAll('[data-k]').forEach(e=>e.textContent=tr(D[e.dataset.k]));
+  $('#hwtxt').textContent=ko?'숙제':'HOMEWORK';$('#hwtxt').setAttribute('font-size',ko?44:30);$('#hwtxt').setAttribute('x',ko?60:40);
+  if(!S.name)$('#cname').value=tr(D.defName);
+  syncSet();
+}
+function syncSet(){
+  $('#sSound').checked=S.set.sound;$('#sVol').value=Math.round(S.set.vol*100);
+  $('#sMusic').checked=S.set.music;$('#sMVol').value=Math.round(S.set.mvol*100);
+  $('#sFx').checked=S.set.fx;$('#sScr').checked=S.set.scr;
+  $d.querySelectorAll('[data-lang]').forEach(b=>b.classList.toggle('on',b.dataset.lang==S.set.lang));
+  $d.querySelectorAll('[data-nf]').forEach(b=>b.classList.toggle('on',b.dataset.nf==S.set.nf));
+  $d.body.classList.toggle('noscr',!S.set.scr);
+}
+function refreshAll(){applyLang();buildStore();renderUps(true);renderAch();stats();tickerNext();buildAdmin();updateStore();updateAC();ui()}
+
+function fmt(n,d=0){
+  if(!isFinite(n))return '∞';
+  if(S.set.nf=='kr'){
+    if(n<1e4)return n.toFixed(d);
+    const u=['','만','억','조','경','해','자','양'];const t=Math.min(Math.floor(Math.log10(n)/4),u.length-1);
+    return (n/Math.pow(10,t*4)).toFixed(2)+u[t];
+  }
+  const SUF=['','K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc'];
+  if(n<1000)return n.toFixed(d);
+  const t=Math.min(Math.floor(Math.log10(n)/3),SUF.length-1);return (n/Math.pow(10,t*3)).toFixed(2)+SUF[t];
+}
+
+/* ---------- SOUND EFFECTS (made with code, no files needed) ---------- */
+let AC=null;
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state=='suspended')AC.resume();return AC}
+function tone(f,d,type='sine',v=.2,slide=0,delay=0){
+  if(!S.set.sound||S.set.vol<=0)return;const c=ac();if(!c)return;
+  const t=c.currentTime+delay,o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);
+  if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f*slide),t+d);
+  g.gain.setValueAtTime(Math.max(v*S.set.vol,.0001),t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+d+.03);
+}
+const sfx={
+  click(){tone(420+Math.random()*260,.09,'square',.12,1.7)},
+  buy(){[523,659,784].forEach((f,i)=>tone(f,.15,'triangle',.22,0,i*.06))},
+  upg(){[660,880,1175,1568].forEach((f,i)=>tone(f,.18,'triangle',.22,0,i*.07))},
+  ach(){[523,659,784,1047,1319].forEach((f,i)=>tone(f,.28,'sine',.25,0,i*.1))},
+  goldSpawn(){tone(1400,.18,'sine',.2,1.4);tone(1900,.22,'sine',.2,1.3,.12)},
+  goldClick(){tone(500,.3,'sawtooth',.18,4);tone(1000,.3,'sine',.2,2,.08)},
+  frenzy(){tone(180,.45,'sawtooth',.2,5);tone(360,.45,'square',.12,4,.05)},
+  allnight(){[300,400,500,600,800].forEach((f,i)=>tone(f,.12,'square',.15,1.2,i*.05))},
+  lucky(){[1047,1319,1568,2093].forEach((f,i)=>tone(f,.12,'sine',.22,0,i*.07))},
+  no(){tone(160,.16,'square',.12,.6)},
+  pop(){tone(700,.06,'sine',.15,1.5)}
+};
+
+/* ---------- LOFI BACKGROUND MUSIC (made with code) ----------
+   chill = slow lofi | Study Frenzy = a little faster | All-Nighter = SUPER fast */
+const MU={on:false,t:0,step:0,bpm:68,timer:null,mg:null,lp:null,noise:null};
+const BPM={chill:68,frenzy:90,night:175};
+const CH=[[48,52,55,59],[45,52,55,60],[50,53,57,60],[43,50,53,59]];   // Cmaj7, Am7, Dm7, G7
+const BS=[36,33,38,31];
+const PEN=[72,74,76,79,81,84];                                        // pentatonic melody notes
+const mf=n=>440*Math.pow(2,(n-69)/12);
+function musicMode(){return bf('c')>1?'night':bf('f')>1?'frenzy':'chill'}
+function mNote(f,t,d,type,v,att=.012){
+  const c=AC,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(d,att+.02));
+  o.connect(g);g.connect(MU.mg);o.start(t);o.stop(t+d+.05);
+}
+function mNoise(t,d,v,ftype,freq){
+  const c=AC,s=c.createBufferSource();s.buffer=MU.noise;
+  const f=c.createBiquadFilter();f.type=ftype;f.frequency.value=freq;
+  const g=c.createGain();g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  s.connect(f);f.connect(g);g.connect(MU.mg);s.start(t,Math.random()*.5);s.stop(t+d+.02);
+}
+function mKick(t,v){
+  const c=AC,o=c.createOscillator(),g=c.createGain();
+  o.frequency.setValueAtTime(135,t);o.frequency.exponentialRampToValueAtTime(42,t+.12);
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.2);
+  o.connect(g);g.connect(MU.mg);o.start(t);o.stop(t+.25);
+}
+function playStep(s,t){
+  const m=musicMode(),nt=m=='night',fr=m=='frenzy',bar=(s>>4)&3,st=s&15,sl=60/MU.bpm/4,hum=()=>Math.random()*.01;
+  // warm electric-piano chords
+  if(st==0||st==10){const v=st==0?.07:.04,d=sl*(st==0?14:5);
+    CH[bar].forEach(n=>{mNote(mf(n),t+hum(),d,'triangle',v);mNote(mf(n)*1.004,t+hum(),d,'sine',v*.7)})}
+  // bass
+  if(nt?st%4==0:(st==0||st==10))mNote(mf(BS[bar]),t,sl*(nt?3:4),'sine',.2);
+  // kick
+  if(nt?st%4==0:fr?(st==0||st==7||st==10):(st==0||st==10))mKick(t,.5);
+  // snare
+  if(st==4||st==12){mNoise(t,.14,.18,'bandpass',1800);mNote(190,t,.08,'triangle',.09,.002)}
+  // hats (with lofi swing)
+  const sw=(st%4==2)?sl*.15:0;
+  if(nt||st%2==0||(fr&&Math.random()<.4))mNoise(t+sw,.04,st%4==2?.07:.04,'highpass',7500);
+  // little melody notes
+  const pm=nt?.4:fr?.22:.1;
+  if((nt||st%2==0)&&Math.random()<pm)mNote(mf(PEN[Math.floor(Math.random()*PEN.length)]),t+sw,sl*(nt?3:5),'sine',.06,.005);
+  // vinyl crackle
+  if(Math.random()<.2)mNoise(t+Math.random()*sl,.006,.02,'highpass',3000);
+}
+function musicSched(){
+  const c=AC;if(!c||!MU.on)return;
+  if(MU.t<c.currentTime-.1)MU.t=c.currentTime+.05;
+  while(MU.t<c.currentTime+.4){
+    const m=musicMode();
+    MU.lp.frequency.setTargetAtTime(m=='night'?6500:m=='frenzy'?3800:2400,MU.t,.15);   // gets brighter when it speeds up
+    playStep(MU.step,MU.t);
+    MU.bpm+=(BPM[m]-MU.bpm)*.3;                                                          // smooth "tape speed" change
+    MU.t+=60/MU.bpm/4;MU.step=(MU.step+1)%64;
+  }
+}
+function musicStart(){
+  const c=ac();if(!c||MU.on)return;MU.on=true;
+  if(!MU.mg){
+    MU.mg=c.createGain();MU.lp=c.createBiquadFilter();MU.lp.type='lowpass';MU.lp.frequency.value=2400;
+    MU.mg.connect(MU.lp);MU.lp.connect(c.destination);
+    const nb=c.createBuffer(1,c.sampleRate,c.sampleRate),d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;MU.noise=nb;
+  }
+  MU.mg.gain.cancelScheduledValues(c.currentTime);MU.mg.gain.setValueAtTime(.0001,c.currentTime);MU.mg.gain.setTargetAtTime(S.set.mvol,c.currentTime,.3);
+  MU.t=c.currentTime+.1;MU.step=0;MU.bpm=BPM.chill;
+  clearInterval(MU.timer);MU.timer=setInterval(musicSched,40);
+}
+function musicStop(){
+  if(!MU.on)return;MU.on=false;clearInterval(MU.timer);
+  if(MU.mg&&AC)MU.mg.gain.setTargetAtTime(.0001,AC.currentTime,.08);
+}
+
+/* ---------- HELPERS (buildings) ---------- */
+const B=[
+ ['뭉툭한 연필|Dull Pencil','✏️',15,.1,'한 세기에 정답 하나. 그래도 인정.|Writes one answer per century. Still counts.'],
+ ['지우개 친구|Eraser Buddy','🧽',100,1,'실수를 지우고 새 실수를 만들어줘요.|Erases mistakes so you can make fresh ones.'],
+ ['공부 햄스터|Study Hamster','🐹',1100,8,'쳇바퀴를 돌려 작은 스탠드를 켜요.|Runs on a wheel, powers a tiny desk lamp.'],
+ ['단톡방 컨닝러|Group Chat Cheater','💬',12000,47,'"4번 아는 사람??" 3초마다 올라와요.|"anyone got #4??" every 3 seconds.'],
+ ['수상한 계산기|Suspicious Calculator','🧮',130000,260,'알면 안 되는 답을 알고 있어요.|Knows answers it really should not know.'],
+ ['과외 로봇|Tutor Robot','🤖',1.4e6,1400,'삐빅. 문제는 읽어보셨나요?|Beep boop. Have you tried reading the question?'],
+ ['도서관 유령|Library Ghost','👻',2e7,7800,'3층에 출몰해요. 독서 숙제를 대신 해줘요.|Haunts the 3rd floor. Does your reading.'],
+ ['학습지 공장|Worksheet Factory','🏭',3.3e8,44000,'잃어버리는 속도보다 빨리 인쇄해요.|Prints homework faster than you can lose it.'],
+ ['선생님 뇌물 기금|Teacher Bribe Fund','🍎',5.1e9,260000,'사과, 상품권, 그리고 정성 가득한 카드.|Apples, gift cards, and a very nice card.'],
+ ['두뇌 다운로드 칩|Brain Download Chip','🧠',7.5e10,1.6e6,'꽂고, 무술을 배우고, 에세이 끝.|Plug in, learn kung fu, finish essay.'],
+ ['평행우주 교실 포털|Parallel Class Portal','🌀',1e12,1e7,'다른 차원의 내가 숙제를 해줘요.|Other-you does the homework in another dimension.'],
+ ['최종 보스 교과서|Final Boss Textbook','📕',1.4e13,6.5e7,'1,000쪽. 무게 18kg. 반격함.|1,000 pages. Weighs 40 pounds. Fights back.']
+].map(a=>({n:P(a[0]),e:a[1],c:a[2],p:a[3],d:P(a[4])}));
+
+/* ---------- UPGRADES (every one has its own name) ---------- */
+const BU=[
+ ['잘근잘근 씹은 연필 뚜껑|Chewed Pencil Cap','화려한 젤펜 그립|Fancy Gel Pen Grip','반짝이 필통|Glitter Pencil Case','황금 2B 연필|Golden No.2 Pencil','운명의 연필|Pencil of Destiny'],
+ ['향기 나는 지우개|Scented Eraser','초대형 지우개 블록|Mega Rubber Block','지우개 가루 토네이도|Eraser Shavings Tornado','실수 방지 오라|Anti-Mistake Aura','현실 지우개|Reality Eraser'],
+ ['햄스터 쳇바퀴 책상|Hamster Wheel Desk','아주 작은 독서 안경|Tiny Reading Glasses','카페인 해바라기씨|Caffeinated Seeds','햄스터 우등생 모임|Hamster Honor Society','햄스터 전교 1등|Hamster Valedictorian'],
+ ['읽음 표시 끄기|Read Receipts Off','캡처 단축키|Screenshot Shortcut','공유 문서 대혼란|Shared Google Doc Chaos','정답지 유출|Answer Key Leak','대규모 복붙 프로토콜|Mass Copy-Paste Protocol'],
+ ['스티커 덕지덕지 계산기|Sticker-Covered Calculator','비밀 공식 메모리|Secret Formula Memory','그래프 요정|Graphing Gremlin','무한 배터리|Unlimited Battery','파이 노래하는 계산기|Calculator Sings Pi'],
+ ['삐걱이 관절 기름칠|Squeaky Joint Oil Change','와이파이 안테나 모자|Wi-Fi Antenna Hat','인내심 모드 9000|Patient Mode 9000','로봇 선생님 랩 배틀|Robot Tutor Rap Battle','스카이넷 자습실|Skynet Study Hall'],
+ ['연체 도서의 저주|Overdue Book Curse','조용히 하세요 파워|Shhh Powers','저주받은 책갈피|Haunted Bookmark','십진분류법 강령술|Dewey Decimal Seance','유령 사서 노조|Ghost Librarian Union'],
+ ['학습지 컨베이어 벨트|Conveyor Belt of Worksheets','굴뚝 형광펜|Smokestack Highlighters','야간 근무 스테이플러|Night Shift Staplers','로봇 펀치|Robotic Hole Punchers','완전 자동 재미없는 구역|Fully Automated Fun-Free Zone'],
+ ['책상 위 사과|Apple On The Desk','상품권 작전|Gift Card Gambit',"선생님 총애 쿠데타|Teacher's Pet Coup",'기한 연장 조약|Extension Treaty','마감일 시간왜곡|Deadline Time Warp'],
+ ['칩 펌웨어 1.1|Chip Firmware 1.1','꿈속 공부 모드|Dream Study Mode','다운로드 속도: 메가|Download Speed: Mega','지식 오버클럭|Knowledge Overclock','은하수 두뇌 에디션|Galaxy Brain Edition'],
+ ['다른 우주 필기|Alt-Universe Notes','복제 반 친구들|Clone Classmates','다중우주 조별과제|Multiverse Group Project','무한 숙제 루프|Infinite Homework Loop','현실 전환 선생님|Reality-Switch Teacher'],
+ ['용기의 책갈피|Bookmark of Courage','저주받은 색인 페이지|Cursed Index Pages','기말고사 갑옷|Final Exam Armor','파멸의 용어 해설|Glossary of Doom','교과서 폐위|Textbook Dethroned']
+].map(r=>r.map(P));
+const TI=[[1,10],[5,50],[25,500],[50,5e3],[100,5e4]];
+const U=[];
+B.forEach((b,i)=>TI.forEach((t,k)=>U.push({id:'b'+i+'_'+k,nm:BU[i][k],icon:b.e,cost:b.c*t[1],type:'b',i,
+  dsf:()=>tr(['모든 '+b.n[0]+'의 생산량이 2배가 됩니다.','Doubles the output of every '+b.n[1]+'.']),ok:()=>S.b[i]>=t[0]})));
+function add(type,nm,cost,icon,v,dsf){U.push({id:type+U.length,nm:P(nm),icon,cost,type,v,dsf,ok:()=>S.total>=cost*.4})}
+[['젤펜 그립|Gel Pen Grip',100,'✒️'],['형광펜 손|Highlighter Hands',500,'🖍️'],['속필 세미나|Speed-Writing Seminar',5e3,'📝'],['카페인 손가락|Caffeine Fingers',5e4,'☕'],['양손잡이 낙서꾼|Ambidextrous Scribbler',5e5,'🤲'],['키보드 워리어 장갑|Keyboard Warrior Gloves',5e6,'🧤']]
+ .forEach(x=>add('c',x[0],x[1],x[2],2,()=>tr(['클릭 파워가 2배!','Clicking is twice as powerful.'])));
+[['천 개의 손가락 이론|Thousand Fingers Theory',1e5,'🖐️',.01],['전교 1등의 손|Hand of the Valedictorian',1e7,'🏫',.02],['무한 페이지의 서기관|Scribe of Infinite Pages',1e9,'📜',.05]]
+ .forEach(x=>add('p',x[0],x[1],x[2],x[3],()=>tr(['클릭할 때마다 초당 생산량의 +'+x[3]*100+'%를 추가로 얻어요.','Each click also gives +'+x[3]*100+'% of your per-second production.'])));
+[['금별 스티커 판|Gold Star Sticker Chart',1e3,'🌟',.05],['피자 파티 약속|Pizza Party Promise',1e4,'🍕',.1],['눈 와서 휴교|Snow Day Miracle',1e5,'⛄',.15],['우등생 현수막|Honor Roll Banner',1e6,'🎖️',.2],['방학 모드|Summer Break Mode',1e8,'🏖️',.25],['교장 선생님의 끄덕임|Principal Nods Approvingly',1e10,'🧑‍💼',.5],['졸업모 던지기|Graduation Cap Toss',1e12,'🎓',1]]
+ .forEach(x=>add('g',x[0],x[1],x[2],x[3],()=>tr(['모든 숙제 생산량 +'+x[3]*100+'%.','+'+x[3]*100+'% to ALL homework production.'])));
+add('l','행운의 연필|Lucky Pencil',7777,'🍀',.7,()=>tr(['황금 A+가 더 자주, 더 오래 나타나요.','Golden A+ stars show up more often and stay longer.']));
+add('l',"선생님의 애제자|Teacher's Favorite",7.7e7,'💖',.7,()=>tr(['황금 A+가 훨씬 더 자주, 더 오래 나타나요.','Golden A+ stars show up even more often and stay longer.']));
+const UM={};U.forEach(u=>UM[u.id]=u);
+
+/* ---------- LOAD ---------- */
+S.b=B.map(()=>0);
+try{const x=JSON.parse(localStorage.getItem('hwclick1'));if(x){S=Object.assign(S,x);while(S.b.length<B.length)S.b.push(0)}}catch(e){}
+S.set=Object.assign({},DEF,S.set||{});if(S.name==='Your')S.name='';if(!S.ac)S.ac=0;
+function save(){try{localStorage.setItem('hwclick1',JSON.stringify(S))}catch(e){}}
+const has=id=>S.up.includes(id);
+const adm={on:false,free:false,all:false,mult:1,speed:1,auto:0};   // admin cheats (not saved)
+let cps=0,cm=1,cpct=0,goldF=1,amt=1,buffs=[];
+function recalc(){
+  let g=1+S.ach.length*.01;cm=1;cpct=0;goldF=1;const m=B.map(()=>1);
+  U.forEach(u=>{if(!has(u.id))return;
+    if(u.type=='b')m[u.i]*=2;else if(u.type=='g')g+=u.v;else if(u.type=='c')cm*=2;else if(u.type=='p')cpct+=u.v;else if(u.type=='l')goldF*=u.v});
+  cps=0;B.forEach((b,i)=>{b.eff=b.p*m[i]*g;cps+=S.b[i]*b.eff});
+}
+const bf=t=>buffs.filter(b=>b.t==t).reduce((a,b)=>a*b.m,1);
+const effCps=()=>cps*bf('f')*adm.mult;
+const clickVal=()=>(cm+cpct*cps*bf('f'))*bf('c')*adm.mult;
+const costN=(i,n)=>adm.free?0:Math.ceil(B[i].c*Math.pow(1.15,S.b[i])*(Math.pow(1.15,n)-1)/.15);
+const upCost=u=>adm.free?0:u.cost;
+
+/* ---------- ACHIEVEMENTS (new ones only go at the END so old saves stay correct) ---------- */
+const A=[
+['첫 장|First Page','📄','숙제를 한 번 클릭하세요.|Click the homework once.',()=>S.clicks>=1],
+['손에 쥐 났어요|Hand Cramp','✋','100번 클릭하세요.|Click 100 times.',()=>S.clicks>=100],
+['손목터널 화요일|Carpal Tunnel Tuesday','🦴','1,000번 클릭하세요.|Click 1,000 times.',()=>S.clicks>=1e3],
+['클릭 기계|Click Machine','⚙️','10,000번 클릭하세요.|Click 10,000 times.',()=>S.clicks>=1e4],
+['숙제 산더미|Stack Overflow','📚','총 숙제 100개 만들기|Make 100 homeworks in total.',()=>S.total>=100],
+['책가방 과부하|Backpack Overload','🎒','총 숙제 1만 개 만들기|Make 10K homeworks in total.',()=>S.total>=1e4],
+['사물함 눈사태|Locker Avalanche','🏔️','총 숙제 100만 개 만들기|Make 1M homeworks in total.',()=>S.total>=1e6],
+['재활용 센터 패닉|Recycling Plant Panic','♻️','총 숙제 10억 개 만들기|Make 1B homeworks in total.',()=>S.total>=1e9],
+['숙제 블랙홀|Homework Black Hole','🕳️','총 숙제 1조 개 만들기|Make 1T homeworks in total.',()=>S.total>=1e12],
+['연필 장인|Pencil Pusher','✏️','뭉툭한 연필 25개 보유|Own 25 Dull Pencils.',()=>S.b[0]>=25],
+['햄스터 조련사|Hamster Whisperer','🐹','공부 햄스터 10마리 보유|Own 10 Study Hamsters.',()=>S.b[2]>=10],
+['반 편성 완료|Full Class Roster','👥','모든 도우미를 1개 이상 보유|Own at least 1 of every helper.',()=>S.b.every(x=>x>0)],
+['욕심쟁이 우등생|Overachiever','🏅','모든 도우미를 10개씩 보유|Own 10 of every helper.',()=>S.b.every(x=>x>=10)],
+['업그레이드 중독|Upgrade Addict','🛒','업그레이드 10개 구매|Buy 10 upgrades.',()=>S.up.length>=10],
+['업그레이드 수집가|Upgrade Hoarder','🧺','업그레이드 40개 구매|Buy 40 upgrades.',()=>S.up.length>=40],
+['A+ 학생|A+ Student','🌟','황금 A+ 클릭하기|Click a golden A+.',()=>S.gold>=1],
+['스타 학생|Star Student','💫','황금 A+ 10번 클릭하기|Click 10 golden A+s.',()=>S.gold>=10],
+['느려도 꾸준히|Slow And Steady','🐢','초당 100 달성|Reach 100 per second.',()=>cps>=100],
+['공장장|Factory Floor Boss','🏗️','초당 1만 달성|Reach 10K per second.',()=>cps>=1e4],
+['올 A 은하|Straight-A Galaxy','🌌','초당 1,000만 달성|Reach 10M per second.',()=>cps>=1e7],
+['낙서 부대|Scribble Squad','🖱️','자동 낙서 손 10개 보유|Own 10 Auto-Scribblers.',()=>S.ac>=10]
+].map(a=>({n:P(a[0]),e:a[1],d:P(a[2]),ok:a[3]}));
+function checkAch(){A.forEach((a,i)=>{if(!S.ach.includes(i)&&a.ok()){S.ach.push(i);recalc();sfx.ach();
+  note('🏆 '+tr(a.n)+'<br><small>'+tr(a.d)+' '+tr(D.achBonus)+'</small>');burst(innerWidth/2,80,12);renderAch()}})}
+function renderAch(){$('#ach').innerHTML=A.map((a,i)=>{const o=S.ach.includes(i);return `<div class="a ${o?'':'lock'}" title="${o?tr(a.n)+' - '+tr(a.d):'???'}">${o?a.e:'❔'}</div>`}).join('')}
+
+/* ---------- EFFECTS ---------- */
+function note(h){const n=$('#note');n.innerHTML=h;n.classList.add('show');clearTimeout(note.t);note.t=setTimeout(()=>n.classList.remove('show'),3500)}
+function flash(){if(!S.set.scr)return;const f=$('#flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go')}
+function burst(x,y,n=6){if(!S.set.fx)return;const E=['✏️','⭐','📄','✨','💥','📝','🖍️'];
+  for(let k=0;k<n;k++){const d=$d.createElement('div');d.className='fx';d.textContent=E[Math.floor(Math.random()*E.length)];
+    const a=Math.random()*6.28,r=40+Math.random()*90;d.style.left=x+'px';d.style.top=y+'px';
+    d.style.setProperty('--dx',Math.cos(a)*r+'px');d.style.setProperty('--dy',Math.sin(a)*r-40+'px');d.style.setProperty('--rot',(Math.random()*720-360)+'deg');
+    $d.body.appendChild(d);setTimeout(()=>d.remove(),900)}}
+function pop(x,y,t){if(!S.set.fx)return;const d=$d.createElement('div');d.className='pop';d.textContent=t;d.style.left=(x-20)+'px';d.style.top=(y-30)+'px';$d.body.appendChild(d);setTimeout(()=>d.remove(),1000)}
+const give=g=>{S.hw+=g;S.total+=g};
+
+/* ---------- CLICKING (mouse, touch, or SPACE BAR) ---------- */
+const hw=$('#hw');
+function doClick(x,y){const v=clickVal();give(v);S.clicks++;pop(x,y,'+'+fmt(v,v<10?1:0));burst(x,y,5);sfx.click();
+  hw.classList.add('ouch','press');setTimeout(()=>hw.classList.remove('ouch','press'),110)}
+hw.addEventListener('click',e=>doClick(e.clientX,e.clientY));
+
+/* ---------- AUTO-SCRIBBLER (repeatable: each one = 1 click per 3 seconds) ---------- */
+const AC_BASE=1000,AC_G=1.12;     // starts at 1,000 and gets 12% pricier each time you buy one
+const acCostN=n=>adm.free?0:Math.ceil(AC_BASE*Math.pow(AC_G,S.ac)*(Math.pow(AC_G,n)-1)/(AC_G-1));
+let acAcc=0,lastAutoSnd=0,lastAutoPop=0;
+function buyAC(){const c=acCostN(amt);if(S.hw<c){sfx.no();return}S.hw-=c;S.ac+=amt;sfx.buy();
+  const r=$('#acCard').getBoundingClientRect();burst(r.left+30,r.top+20,8);checkAch();updateAC()}
+$('#acCard').onclick=buyAC;
+function updateAC(){
+  const vis=adm.all||S.ac>0||S.total>=AC_BASE*.4;
+  $('#acHead').style.display=vis?'':'none';$('#acCard').style.display=vis?'flex':'none';if(!vis)return;
+  const c=acCostN(amt);
+  $('#acCost').textContent=tr(D.cost)+': '+fmt(c)+'  |  '+tr(['지금: 3초에 '+S.ac+'번 클릭','now: '+S.ac+' click'+(S.ac==1?'':'s')+' per 3s']);
+  $('#acOwn').textContent=S.ac;$('#acCard').className='item '+(S.hw>=c?'yes':'no');
+  $('#acBar i').style.width=(S.ac>0?Math.min(acAcc,1)*100:0)+'%';
+}
+function autoClicks(n){
+  const v=clickVal()*n;give(v);S.clicks+=n;
+  const now=Date.now(),r=hw.getBoundingClientRect();
+  if(now-lastAutoPop>220){lastAutoPop=now;pop(r.left+r.width*(.3+Math.random()*.4),r.top+r.height*.35,'+'+fmt(v,v<10?1:0))}
+  hw.classList.add('ouch');setTimeout(()=>hw.classList.remove('ouch'),90);
+  if(now-lastAutoSnd>250){lastAutoSnd=now;tone(900+Math.random()*200,.05,'sine',.06,1.3)}
+}
+
+/* ---------- GOLDEN A+ ---------- */
+function goldEffect(k){
+  if(k=='lucky'){const x=Math.min(S.hw*.15,cps*900)+13;give(x);sfx.lucky();
+    note(tr(['🍀 행운! 가방에서 숙제 <b>'+fmt(x)+'</b>개를 발견했어요!','🍀 Lucky! You found <b>'+fmt(x)+'</b> homeworks in your backpack!']))}
+  else if(k=='frenzy'){buffs.push({n:P('🔥 벼락치기 ×3|🔥 Study Frenzy ×3'),t:'f',m:3,end:Date.now()+7000});sfx.frenzy();
+    note(tr(['🔥 벼락치기! 생산량 ×3 (7초)','🔥 STUDY FRENZY! Production ×3 for 7s!']))}
+  else{buffs.push({n:P('☕ 밤샘 공부: 클릭 ×777|☕ All-Nighter: clicks ×777'),t:'c',m:777,end:Date.now()+10000});sfx.allnight();
+    note(tr(['☕ 밤샘 공부! 클릭 ×777 (10초) - 클릭 클릭 클릭!','☕ ALL-NIGHTER! Clicks ×777 for 10s - CLICK CLICK CLICK!']))}
+}
+function spawnGold(){
+  const g=$d.createElement('div');g.className='gold';g.textContent='A+';
+  g.style.left=(10+Math.random()*(innerWidth-110))+'px';g.style.top=(10+Math.random()*(innerHeight-110))+'px';
+  g.onclick=e=>{S.gold++;g.remove();flash();burst(e.clientX,e.clientY,22);sfx.goldClick();
+    const r=Math.random();goldEffect(r<.4?'lucky':r<.8?'frenzy':'night')};
+  $d.body.appendChild(g);sfx.goldSpawn();setTimeout(()=>g.remove(),13000/goldF);
+}
+function schedGold(first){setTimeout(()=>{spawnGold();schedGold()},first?20000:(25+Math.random()*45)*1000*goldF)}
+
+/* ---------- STORE ---------- */
+function buildStore(){const st=$('#store');st.innerHTML='';
+  B.forEach((b,i)=>{const d=$d.createElement('div');d.className='item';
+    d.innerHTML=`<div class="ic">${b.e}</div><div><div class="nm">${tr(b.n)}</div><div class="cs"></div><div class="ds">${tr(b.d)}</div></div><div class="ow">0</div>`;
+    d.onclick=()=>buy(i,d);st.appendChild(d)})}
+function buy(i,el){const c=costN(i,amt);if(S.hw<c){sfx.no();return}S.hw-=c;S.b[i]+=amt;recalc();sfx.buy();
+  const r=el.getBoundingClientRect();burst(r.left+30,r.top+20,8);renderUps(true);checkAch();updateStore()}
+function updateStore(){[...$('#store').children].forEach((d,i)=>{
+  const vis=adm.all||S.total>=B[i].c*.4||S.b[i]>0;d.style.display=vis?'flex':'none';if(!vis)return;
+  const c=costN(i,amt);d.querySelector('.cs').textContent=tr(D.cost)+': '+fmt(c)+'  |  '+tr(D.each)+' '+fmt(B[i].eff||B[i].p,1)+tr(D.persec);
+  d.querySelector('.ow').textContent=S.b[i];d.className='item '+(S.hw>=c?'yes':'no')})}
+$d.querySelectorAll('#amt button').forEach(b=>b.onclick=()=>{amt=+b.dataset.a;sfx.pop();$d.querySelectorAll('#amt button').forEach(x=>x.classList.toggle('on',x==b));updateStore();updateAC()});
+
+/* ---------- UPGRADES ROW ---------- */
+const tip=$('#tip');
+function showTip(u,e){tip.innerHTML=`<b>${u.icon} ${tr(u.nm)}</b><br>${u.dsf()}<br><i>${tr(D.cost)}: ${fmt(upCost(u))}</i>`;tip.style.display='block';moveTip(e)}
+function moveTip(e){tip.style.left=Math.max(5,e.clientX-280)+'px';tip.style.top=(e.clientY+18)+'px'}
+function hideTip(){tip.style.display='none'}
+let upKey='';
+function renderUps(force){
+  const av=U.filter(u=>!has(u.id)&&(adm.all||u.ok())).sort((a,b)=>a.cost-b.cost);
+  const key=av.map(u=>u.id).join();if(!force&&key==upKey)return;upKey=key;
+  const box=$('#ups');box.innerHTML='';
+  if(!av.length){box.innerHTML='<i style="color:#888">'+tr(D.noUp)+'</i>';return}
+  av.forEach(u=>{const b=$d.createElement('button');b.className='upg';b.textContent=u.icon;b.dataset.id=u.id;
+    b.onclick=()=>{const c=upCost(u);if(S.hw<c){sfx.no();return}S.hw-=c;S.up.push(u.id);hideTip();recalc();sfx.upg();
+      const r=b.getBoundingClientRect();burst(r.left+20,r.top+20,10);note('✅ '+tr(u.nm)+'<br><small>'+u.dsf()+'</small>');renderUps(true);checkAch();updateStore()};
+    b.onmouseenter=e=>showTip(u,e);b.onmousemove=moveTip;b.onmouseleave=hideTip;box.appendChild(b)})}
+
+/* ---------- NEWS TICKER ---------- */
+const T=[
+[0,`선생님이 "10분이면 돼"라고 하셨어요. 안 돼요.|Your teacher says "this should only take ten minutes." It will not.`],
+[0,'속보: 한 학생이 숙제가 내일 아침까지임을 밤 11시 58분에 발견.|Breaking: local student discovers homework due tomorrow at 11:58 PM.'],
+[0,'강아지가 숙제를 먹었어요. 그 강아지는 지금 엄청 똑똑해졌대요.|The dog ate your homework. The dog is now suspiciously smart.'],
+[0,'전문가들 혼란: 아이가 종이 한 장을 쉬지 않고 클릭 중.|Experts baffled as kid clicks piece of paper nonstop.'],
+[50,'어딘가에서 연필이 깎였습니다. 이유는 아무도 몰라요.|A pencil is sharpened somewhere. Nobody knows why.'],
+[200,'과학자들 확인: 숙제는 주어진 시간을 전부 채울 때까지 늘어난다.|Scientists confirm: homework expands to fill all available time.'],
+[1e3,'책가방에 자체 중력이 생겼어요.|Your backpack has gained its own gravitational pull.'],
+[5e3,'햄스터 노조가 해바라기씨 증량과 분수 감량을 요구해요.|Hamster union demands more sunflower seeds and fewer fractions.'],
+[2e4,`단톡방 안 읽은 메시지 400개. 전부 "몇 페이지야?"|Group chat reaches 400 unread messages, all of them "wait what page".`],
+[1e5,'계산기가 밤마다 방정식을 속삭여요. 아마 괜찮을 거예요.|The calculator whispers equations at night. Probably fine.'],
+[1e6,'도서관 유령이 선행학습 중. 심지어 추가 과제까지. 잘난 척 쩔어.|Library ghost seen reading ahead. Doing extra credit. Show-off.'],
+[1e7,'선생님이 비품실에서 우는 모습이 포착됐어요. 기쁨의 눈물? 불분명.|Teacher spotted crying in the supply closet. Joy? Unclear.'],
+[1e8,'학습지가 나무보다 많아졌어요. 나무들이 항의 중입니다.|Worksheets now outnumber trees. The trees are filing complaints.'],
+[1e9,'교장 선생님이 비상사태를 선포했어요. 피자 파티도요.|Principal declares a state of emergency. Also a pizza party.'],
+[1e10,'새 행성 발견. 전부 스테이플러 심으로 되어 있어요.|A new planet discovered. It is made entirely of staples.'],
+[1e12,'평행우주의 당신이 방금 숙제를 끝냈어요. 엄청 으스대는 중.|Parallel-universe you just finished their homework. Parallel-universe you is smug.'],
+[1e14,'교과서가 자아를 얻었어요. 형광펜 좀 그만 칠해달래요.|The textbook has become sentient and asks you to stop highlighting it.']
+].map(t=>[t[0],P(t[1])]);
+function tickerNext(){const ok=T.filter(t=>S.total>=t[0]);const m=tr(ok[Math.floor(Math.random()*ok.length)][1]);const el=$('#ticker');el.style.opacity=0;setTimeout(()=>{el.textContent=m;el.style.opacity=1},300)}
+
+/* ---------- ADMIN MENU (type  a d m i n ) ---------- */
+function admGive(n){give(n);note('+'+fmt(n))}
+function warp(sec){const g=effCps()*sec;give(g);note('⏩ +'+fmt(g))}
+const ml=m=>m>=1e6?['×100만','×1M']:['×'+m,'×'+m];
+const ADMS=[
+ {t:P('🏠 숙제|🏠 Homeworks'),items:[
+  {l:P('+1천|+1K'),f:()=>admGive(1e3)},{l:P('+100만|+1M'),f:()=>admGive(1e6)},{l:P('+10억|+1B'),f:()=>admGive(1e9)},
+  {l:P('+1조|+1T'),f:()=>admGive(1e12)},{l:P('+1000조|+1Qa'),f:()=>admGive(1e15)},
+  {l:P('×10 (현재의 10배)|×10 current'),f:()=>give(S.hw*9)},{l:P('0으로|Set to 0'),f:()=>{S.hw=0}},
+  {custom:1},
+  {lab:P('⏩ 시간 건너뛰기|⏩ Time skip')},
+  {l:P('1분|1 min'),f:()=>warp(60)},{l:P('10분|10 min'),f:()=>warp(600)},{l:P('1시간|1 hour'),f:()=>warp(3600)}]},
+ {t:P('⚡ 배율·속도|⚡ Power & Speed'),items:[
+  {lab:P('생산·클릭 배율|Production & click multiplier')},
+  ...[1,10,100,1e3,1e6].map(m=>({l:ml(m),f:()=>{adm.mult=m},on:()=>adm.mult==m})),
+  {lab:P('게임 속도|Game speed')},
+  ...[1,5,20].map(s=>({l:['×'+s,'×'+s],f:()=>{adm.speed=s},on:()=>adm.speed==s})),
+  {lab:P('자동 클릭 (치트)|Auto-clicker (cheat)')},
+  ...[0,10,50,200].map(a=>({l:[a?'초당 '+a+'번':'끄기',a?a+'/s':'Off'],f:()=>{adm.auto=a},on:()=>adm.auto==a})),
+  {lab:P('토글|Toggles')},
+  {l:P('💸 무료 구매|💸 Free purchases'),f:()=>{adm.free=!adm.free},on:()=>adm.free},
+  {l:P('👀 전부 보기|👀 Show everything'),f:()=>{adm.all=!adm.all},on:()=>adm.all},
+  {l:P('치트 초기화|Reset toggles'),f:()=>{adm.mult=1;adm.speed=1;adm.auto=0;adm.free=false;adm.all=false}}]},
+ {t:P('🧑‍🏫 도우미|🧑‍🏫 Helpers'),items:[
+  {l:P('각 +1|+1 each'),f:()=>{S.b=S.b.map(x=>x+1)}},{l:P('각 +10|+10 each'),f:()=>{S.b=S.b.map(x=>x+10)}},
+  {l:P('각 +100|+100 each'),f:()=>{S.b=S.b.map(x=>x+100)}},{l:P('모두 0으로|Reset to 0'),f:()=>{S.b=B.map(()=>0)}},
+  {lab:P('🖱️ 자동 낙서 손|🖱️ Auto-Scribblers')},
+  {l:P('+1개|+1'),f:()=>{S.ac+=1}},{l:P('+10개|+10'),f:()=>{S.ac+=10}},{l:P('+100개|+100'),f:()=>{S.ac+=100}},{l:P('0으로|Reset to 0'),f:()=>{S.ac=0;acAcc=0}}]},
+ {t:P('🛒 업그레이드·업적|🛒 Upgrades & Achievements'),items:[
+  {l:P('업그레이드 전부 얻기|Get ALL upgrades'),f:()=>{S.up=U.map(u=>u.id)}},
+  {l:P('업그레이드 전부 제거|Remove all upgrades'),f:()=>{S.up=[]}},
+  {l:P('업적 전부 해금|Unlock all achievements'),f:()=>{S.ach=A.map((a,i)=>i)}},
+  {l:P('업적 전부 잠금|Lock all achievements'),f:()=>{S.ach=[]}}]},
+ {t:P('⭐ 황금 A+·버프|⭐ Golden A+ & Buffs'),items:[
+  {l:P('황금 A+ 소환|Spawn golden A+'),f:spawnGold},
+  {l:P('🍀 행운|🍀 Lucky'),f:()=>goldEffect('lucky')},
+  {l:P('🔥 벼락치기|🔥 Study Frenzy'),f:()=>goldEffect('frenzy')},
+  {l:P('☕ 밤샘 공부|☕ All-Nighter'),f:()=>goldEffect('night')},
+  {l:P('버프 해제|Clear buffs'),f:()=>{buffs=[]}}]},
+ {t:P('🐞 디버그|🐞 Debug'),items:[]}
+];
+let admBtns=[];
+function buildAdmin(){
+  const box=$('#admBody');box.innerHTML='';admBtns=[];
+  const after=()=>{recalc();checkAch();renderUps(true);updateStore();updateAC();renderAch();stats();syncAdmin();ui()};
+  ADMS.forEach(sec=>{const s=$d.createElement('div');s.className='admSec';s.innerHTML='<h3>'+tr(sec.t)+'</h3>';
+    sec.items.forEach(it=>{
+      if(it.lab){const d=$d.createElement('div');d.className='admLab';d.textContent=tr(it.lab);s.appendChild(d);return}
+      if(it.custom){const w=$d.createElement('div');const inp=$d.createElement('input');inp.type='text';inp.placeholder=tr(D.admPh);
+        const b=$d.createElement('button');b.textContent=tr(D.admAdd);
+        b.onclick=()=>{const v=Number(inp.value);if(isFinite(v)&&v>0){admGive(v);sfx.pop();after()}else sfx.no()};
+        w.appendChild(inp);w.appendChild(b);s.appendChild(w);return}
+      const b=$d.createElement('button');b.textContent=tr(it.l);b.onclick=()=>{it.f();sfx.pop();after()};
+      s.appendChild(b);admBtns.push([b,it])});
+    box.appendChild(s)});
+  syncAdmin();
+}
+function syncAdmin(){admBtns.forEach(([b,it])=>{if(it.on)b.classList.toggle('on',!!it.on())})}
+function admDebug(){
+  if(!adm.on)return;
+  const ko=S.set.lang=='ko',L=(a,b)=>ko?a:b;
+  $('#admDbg').textContent=
+   L('기본 초당: ','base /s: ')+fmt(cps,2)+'\n'+L('실제 초당: ','real /s: ')+fmt(effCps(),2)+'\n'+L('클릭당: ','per click: ')+fmt(clickVal(),2)+
+   '\n'+L('자동 낙서 손: ','auto-scribblers: ')+S.ac+' ('+(S.ac/3).toFixed(2)+L('번/초)',' clicks/s)')+
+   '\n'+L('황금 속도 계수: ','golden factor: ')+goldF.toFixed(2)+'\n'+L('업그레이드: ','upgrades: ')+S.up.length+'/'+U.length+
+   '\n'+L('버프: ','buffs: ')+buffs.length+'\n'+L('배율/속도/자동: ','mult/speed/auto: ')+adm.mult+'/'+adm.speed+'/'+adm.auto+
+   '\n'+L('음악 BPM: ','music BPM: ')+(MU.on?Math.round(MU.bpm)+' ('+musicMode()+')':L('꺼짐','off'));
+}
+function toggleAdmin(){adm.on=!adm.on;$('#adm').classList.toggle('show',adm.on);sfx.upg();note(tr(adm.on?D.admOn:D.admOff));admDebug()}
+$('#admX').onclick=toggleAdmin;
+(()=>{const h=$('#admHead'),p=$('#adm');let ox=0,oy=0,dr=false;
+  h.onpointerdown=e=>{if(e.target.tagName=='BUTTON')return;dr=true;const r=p.getBoundingClientRect();ox=e.clientX-r.left;oy=e.clientY-r.top;h.setPointerCapture(e.pointerId)};
+  h.onpointermove=e=>{if(!dr)return;p.style.left=Math.max(0,e.clientX-ox)+'px';p.style.top=Math.max(0,e.clientY-oy)+'px'};
+  h.onpointerup=()=>{dr=false}})();
+
+/* ---------- KEYBOARD ---------- */
+const inField=t=>t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'||t.tagName=='SELECT');
+let kbuf='';
+addEventListener('keydown',e=>{
+  if(inField(e.target))return;
+  if(e.code=='Escape'){$('#setBg').classList.remove('show');if(adm.on)toggleAdmin();return}
+  if(e.code=='Space'){
+    e.preventDefault();
+    if(e.repeat||$('#setBg').classList.contains('show'))return;
+    if($d.activeElement&&$d.activeElement.tagName=='BUTTON')$d.activeElement.blur();
+    const r=hw.getBoundingClientRect();
+    doClick(r.left+r.width/2+(Math.random()-.5)*90,r.top+r.height*.4);return}
+  if(e.code.startsWith('Key')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+    kbuf=(kbuf+e.code.slice(3).toLowerCase()).slice(-5);      // uses physical keys, so it works on a Korean keyboard too
+    if(kbuf=='admin'){kbuf='';toggleAdmin()}
+  }else kbuf='';
+});
+addEventListener('keyup',e=>{if(e.code=='Space'&&!inField(e.target))e.preventDefault()});
+
+/* ---------- UI LOOP ---------- */
+function stats(){$('#stats').innerHTML=`${tr(D.stTotal)}: <b>${fmt(S.total)}</b><br>${tr(D.stClicks)}: <b>${fmt(S.clicks)}</b><br>${tr(D.stGold)}: <b>${S.gold}</b><br>${tr(D.stUp)}: <b>${S.up.length}/${U.length}</b><br>${tr(D.stHelp)}: <b>${S.b.reduce((a,b)=>a+b,0)}</b><br>${tr(D.stAuto)}: <b>${S.ac}</b>`}
+function ui(){
+  const f=Math.floor(S.hw),ko=S.set.lang=='ko';
+  $('#count').textContent=fmt(f);$('#lbl').textContent=ko?'숙제':(f==1?'homework':'homeworks');
+  $('#cps').textContent=tr(D.cps)+': '+fmt(effCps(),1);
+  $d.title=fmt(f)+(ko?' 숙제 - 숙제 클리커':' homeworks - Homework Clicker');
+  updateStore();updateAC();
+  $d.querySelectorAll('.upg').forEach(b=>b.classList.toggle('no',S.hw<upCost(UM[b.dataset.id])));
+  const now=Date.now();$('#buffs').innerHTML=buffs.map(b=>`<div class="buff">${tr(b.n)} ${Math.ceil((b.end-now)/1000)}s</div>`).join('');
+  $d.body.classList.toggle('f',bf('f')>1);$d.body.classList.toggle('c',bf('c')>1);
+}
+let tick=0,last=Date.now(),resetting=false,autoAcc=0;
+setInterval(()=>{const now=Date.now(),dt=Math.min((now-last)/1000,60);last=now;
+  buffs=buffs.filter(b=>b.end>now);
+  give(effCps()*dt*adm.speed);
+  if(S.ac>0){acAcc+=S.ac*dt*adm.speed/3;const n=Math.floor(acAcc);if(n>0){acAcc-=n;autoClicks(n)}}   // Auto-Scribblers
+  if(adm.auto){autoAcc+=adm.auto*dt;const n=Math.floor(autoAcc);if(n){autoAcc-=n;S.clicks+=n;give(clickVal()*n)}}   // admin cheat
+  tick++;ui();
+  if(tick%10==0){renderUps();checkAch();stats();admDebug()}
+  if(tick%300==0)save()},100);
+setInterval(tickerNext,8000);
+let sd=1;setInterval(()=>{sd=sd%4+1;$('#turb').setAttribute('seed',sd)},220);
+
+/* ---------- BUTTONS & SETTINGS ---------- */
+$('#cname').oninput=e=>{S.name=e.target.value};
+$('#saveBtn').onclick=()=>{save();sfx.pop();note(tr(D.saved))};
+$('#resetBtn').onclick=()=>{if(confirm(tr(D.wipe))){resetting=true;try{localStorage.removeItem('hwclick1')}catch(e){}location.reload()}};
+$('#setBtn').onclick=()=>{sfx.pop();$('#setBg').classList.add('show')};
+$('#setClose').onclick=()=>{sfx.pop();$('#setBg').classList.remove('show');save()};
+$('#setBg').onclick=e=>{if(e.target.id=='setBg'){$('#setBg').classList.remove('show');save()}};
+$d.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{S.set.lang=b.dataset.lang;S.set.nf=b.dataset.lang=='ko'?'kr':'en';sfx.pop();refreshAll()});
+$d.querySelectorAll('[data-nf]').forEach(b=>b.onclick=()=>{S.set.nf=b.dataset.nf;sfx.pop();syncSet();refreshAll()});
+$('#sSound').onchange=e=>{S.set.sound=e.target.checked;sfx.pop()};
+$('#sVol').oninput=e=>{S.set.vol=e.target.value/100};
+$('#sVol').onchange=()=>sfx.buy();
+$('#sMusic').onchange=e=>{S.set.music=e.target.checked;if(S.set.music)musicStart();else musicStop()};
+$('#sMVol').oninput=e=>{S.set.mvol=e.target.value/100;if(MU.mg&&AC&&MU.on)MU.mg.gain.setTargetAtTime(Math.max(S.set.mvol,.0001),AC.currentTime,.05)};
+$('#sFx').onchange=e=>{S.set.fx=e.target.checked;sfx.pop()};
+$('#sScr').onchange=e=>{S.set.scr=e.target.checked;syncSet();sfx.pop()};
+addEventListener('beforeunload',()=>{if(!resetting)save()});
+
+/* ---------- START ---------- */
+// browsers only allow audio after the first click or key press, so the music starts then
+const firstGesture=()=>{removeEventListener('pointerdown',firstGesture);removeEventListener('keydown',firstGesture);if(S.set.music)musicStart()};
+addEventListener('pointerdown',firstGesture);addEventListener('keydown',firstGesture);
+recalc();refreshAll();schedGold(true);
+</script>
+</body>
+</html>
